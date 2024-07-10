@@ -451,4 +451,23 @@ final class RouteTests: XCTestCase {
             XCTAssertEqual(res.body.string, "foopbarp")
         }
     }
+    
+    // https://github.com/vapor/vapor/issues/3213
+    func testGH3213() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        
+        app.get(":parameter") { _ in "1" }
+        app.get("constant", "nested") { _ in "2" }
+        
+        try app.testable(method: .running(port: 0)).test(.GET, "/constant") { res in
+            XCTExpectFailure("Unresolved Issue: ttps://github.com/vapor/vapor/issues/3213") {
+                XCTAssertEqual(res.status, .ok)
+                XCTAssertEqual(res.body.string, "1")
+            }
+        }.test(.GET, "/other") { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertEqual(res.body.string, "1")
+        }
+    }
 }
